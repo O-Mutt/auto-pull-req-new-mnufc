@@ -25,11 +25,11 @@ module.exports = function(context, cb) {
         var videoPromises = [];
         _.forEach($(".views-row .node"), function(node) {
           console.log("fffuuuu");
-            let highlight = cheerio(node)('.node-title a');
+            let highlight = $.find('.node-title a');
             let title = highlight.text();
             console.log(title);
             let postUrl = highlight.attr('href');
-            var date = cheerio(node)('.timestamp').text();
+            var date = $.find('.timestamp').text();
             highlight = $(highlight);
             highlightArray.push({ title: title, postUrl: postUrl, date: date });
         });
