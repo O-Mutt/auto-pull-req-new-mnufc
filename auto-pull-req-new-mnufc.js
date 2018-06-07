@@ -25,7 +25,7 @@ module.exports = function(context, cb) {
         var videoPromises = [];
         _.forEach($(".views-row .node"), function(node) {
           console.log("fffuuuu");
-            let highlight = $(node)('.node-title a');
+            let highlight = node.find('.node-title a');
             let title = highlight.text();
             console.log(title);
             let postUrl = highlight.attr('href');
