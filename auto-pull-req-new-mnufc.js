@@ -9,8 +9,7 @@ const cheerio = require('cheerio');
 const Promises = require('bluebird');
 const hostname = 'https://www.mnufc.com'
 
-let postHeader = ` 
-author: Matt Erickson (ME)
+let postHeader = `author: Matt Erickson (ME)
 layout: post
 categories:
   - MNUFC
@@ -35,13 +34,14 @@ module.exports = function(context, cb) {
             return cheerio.load(body);
         }
       }).then(function($) { 
-        //data process 
+        //crawl the page and get all the nodes for each highlight video
         _.map($(".views-row .node"), function(node) {
             let highlight = $(node).find('.node-title a');
             
-            let title = highlight.text().replace('HIGHLIGHTS: ', '');
+            //Remove unneeded parts of the title that make things look weird
+            let title = highlight.text().replace('HIGHLIGHTS: ', '').replace(/\'/gi, '');
             let titleWithoutEndDate = title.replace(/\|.*/gi, '').replace('\.', '');
-            let titleWOEDAndSpaces = titleWithoutEndDate.replace(/\s/gi, '-');
+            let titleWOEDAndSpaces = titleWithoutEndDate.replace(/\s/gi, '-').replace(/\-&/, '');
             let postUrl = highlight.attr('href');
             var date =  new Date($(node).find('.timestamp').text().replace(/\s\(.*\)/gi, ''));
             let filename = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + '-' + titleWOEDAndSpaces + '.md';
@@ -56,6 +56,7 @@ module.exports = function(context, cb) {
             });
         });
 
+        //After we get all the nodes for the videos we need to fetch the post page for the video url itself
         _.forEach(highlightArray, function(highlight) {
             var vidProm = rp({
                 uri: hostname + highlight.postUrl,
@@ -66,16 +67,17 @@ module.exports = function(context, cb) {
             videoPromises.push(vidProm);
         });
 
+        //after all the videos come back lets add it to the highlight array and then send it to GH
         Promises.all(videoPromises).then(function(videos) {
             for (var i = 0; i < highlightArray.length; i++) {
               let videoHtml = iframeUrlTemplate.replace('{replaceMe}', videos[i]('video').attr('data-video-id'));
               highlightArray[i].video = videoHtml;
             }
-            mapHighlightsToGitHub(highlightArray);
+            SendNewFilesToGitHubRepo(highlightArray);
         });
     });
 
-  function mapHighlightsToGitHub(allHighlights) {
+  function SendNewFilesToGitHubRepo(allHighlights) {
     rp({
       qs: {
         access_token: context.secrets.GITHUB_ACCESS_TOKEN
@@ -86,14 +88,17 @@ module.exports = function(context, cb) {
       json: true,
       uri: `https://api.github.com/repos/Mutmatt/mutmatt.github.io/contents/_posts/mnufc/`
     }).then(function(response) {
+      //We don't want to recreate old files so we will diff the two arrays
       let newPosts = _.differenceWith(allHighlights, response, function(mnufcValue, githubObject) {
         return mnufcValue.filename == githubObject.name;
       });
       
       var ghPromises = [];
+      //Create the header for the markdown
       _.forEach(newPosts, function(post) {
-        var postText = `---\r\ntitle: ${post.title},\r\ndate: ${post.date},\r\npermalink: /${post.permalink}` + postHeader + '\r\n' + post.video;
+        var postText = `---\r\ntitle: ${post.title}\r\ndate: ${post.date}\r\npermalink: /${post.permalink}\r\n${postHeader}\r\n${post.video}`;
 
+        // Send each new file to the github triggering jekyll rebuild/deploy to the site
         ghPromises.push(rp.put({
           qs: {
             access_token: context.secrets.GITHUB_ACCESS_TOKEN
@@ -113,6 +118,7 @@ module.exports = function(context, cb) {
       );
       });
       
+      //After all github files are created return the new posts
       Promises.all(ghPromises).then(function () {
         cb(null, { newPosts });  
       });
