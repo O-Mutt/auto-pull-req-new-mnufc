@@ -46,6 +46,7 @@ module.exports = function(context, cb) {
             var date =  new Date($(node).find('.timestamp').text().replace(/\s\(.*\)/gi, ''));
             let filename = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + '-' + titleWithoutEndDate;
             let permalink = _.snakeCase(filename);
+            
             highlightArray.push({ 
               filename: filename,
               title: title, 
@@ -106,7 +107,7 @@ permalink: /${_.snakeCase(post.title)}` + postHeader + '\r\n' + post.video;
           },
           json: true,
           method: 'PUT',
-          uri: `https://api.github.com/repos/Mutmatt/mutmatt.github.io/contents/_posts/mnufc/` + _.camelCase(post.title) + '.md',
+          uri: `https://api.github.com/repos/Mutmatt/mutmatt.github.io/contents/_posts/mnufc/` + post.filename + '.md',
           body: {
             path: '_posts/mnufc',
             message: post.title,
