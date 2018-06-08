@@ -43,7 +43,7 @@ module.exports = function(context, cb) {
             let titleWithoutEndDate = title.replace(/\|.*/gi, '').replace('\.', '');
             let titleWOEDAndSpaces = titleWithoutEndDate.replace(/\s/gi, '-');
             let postUrl = highlight.attr('href');
-            var date =  new Date($(node).find('.timestamp').text().replace(/,\s\(.*\)/gi, ''));
+            var date =  new Date($(node).find('.timestamp').text().replace(/\s\(.*\)/gi, ''));
             let filename = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + '-' + titleWOEDAndSpaces;
             let permalink = _.snakeCase(filename);
             
