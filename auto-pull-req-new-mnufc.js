@@ -87,9 +87,6 @@ module.exports = function(context, cb) {
       uri: `https://api.github.com/repos/Mutmatt/mutmatt.github.io/contents/_posts/mnufc/`
     }).then(function(response) {
       let newPosts = _.differenceWith(allHighlights, response, function(mnufcValue, githubObject) {
-        console.log('mnufc ' + mnufcValue.filename);
-        console.log(githubObject.name);
-        console.log(mnufcValue.filename === githubObject.name);
         return mnufcValue.filename == githubObject.name;
       });
       
