@@ -41,7 +41,7 @@ module.exports = function(context, cb) {
             //Remove unneeded parts of the title that make things look weird
             let title = highlight.text().replace('HIGHLIGHTS: ', '').replace(/\'/gi, '');
             let titleWithoutEndDate = title.replace(/\|.*/gi, '').replace('\.', '');
-            let titleWOEDAndSpaces = titleWithoutEndDate.replace(/\s/gi, '-').replace(/\-&/, '');
+            let titleWOEDAndSpaces = titleWithoutEndDate.replace(/\s/gi, '-').replace(/\-$/, '');
             let postUrl = highlight.attr('href');
             var date =  new Date($(node).find('.timestamp').text().replace(/\s\(.*\)/gi, ''));
             let filename = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + '-' + titleWOEDAndSpaces + '.md';
