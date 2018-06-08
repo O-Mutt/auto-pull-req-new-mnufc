@@ -21,7 +21,7 @@ tags:
 ---`
 
 
-let iframeUrlTemplate = `<div class='fluid-width-video-wrapper'>\r\n<iframe width='100%' height='auto' frameborder='0' allowfullscreen src="https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001"></iframe>\r\n</div>`;
+let iframeUrlTemplate = `<div class='soccer-video-wrapper'>\r\n<iframe class='soccer-video' width='100%' height='auto' frameborder='0' allowfullscreen src="https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001"></iframe>\r\n</div>`;
 
 /**
  * @param context {WebtaskContext}
