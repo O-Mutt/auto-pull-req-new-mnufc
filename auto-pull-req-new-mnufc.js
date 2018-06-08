@@ -93,10 +93,11 @@ module.exports = function(context, cb) {
         return mnufcValue.filename == githubObject.name;
       });
       
+      var ghPromises = [];
       _.forEach(newPosts, function(post) {
         var postText = `---\r\ntitle: ${post.title},\r\ndate: ${post.date},\r\npermalink: /${post.permalink}` + postHeader + '\r\n' + post.video;
 
-        rp.put({
+        ghPromises.push(rp.put({
           qs: {
             access_token: context.secrets.GITHUB_ACCESS_TOKEN
           },
@@ -111,10 +112,13 @@ module.exports = function(context, cb) {
             message: post.title,
             content: Buffer.from(postText).toString('base64')
           }
-        });
+        })
+      );
       });
       
-      cb(null, { newPosts });
+      Promises.all(ghPromises).then(function () {
+        cb(null, { newPosts });  
+      });
     });
   }
 };
