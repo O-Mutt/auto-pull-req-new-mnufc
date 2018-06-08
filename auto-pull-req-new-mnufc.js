@@ -63,7 +63,6 @@ module.exports = function(context, cb) {
             });
             videoPromises.push(vidProm);
         });
-        videoPromises.push
 
         Promises.all(videoPromises).then(function(videos) {
             for (var i = 0; i < highlightArray.length; i++) {
