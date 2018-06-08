@@ -68,7 +68,7 @@ module.exports = function(context, cb) {
 
         Promises.all(videoPromises).then(function(videos) {
             for (var i = 0; i < highlightArray.length; i++) {
-              videoHtml = iframeUrlTemplate.replace('{replaceMe}', videos[i]('video').attr('data-video-id'));
+              let videoHtml = iframeUrlTemplate.replace('{replaceMe}', videos[i]('video').attr('data-video-id'));
               highlightArray[i].video = videoHtml;
             }
             mapHighlightsToGitHub(highlightArray);
