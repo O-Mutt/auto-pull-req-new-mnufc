@@ -91,10 +91,7 @@ module.exports = function(context, cb) {
       });
       
       _.forEach(newPosts, function(post) {
-        var postText = `---
-title: ${post.title},
-date: ${post.date},
-permalink: /${_.snakeCase(post.title)}` + postHeader + '\r\n' + post.video;
+        var postText = `---\r\ntitle: ${post.title},\r\ndate: ${post.date},\r\npermalink: /${post.permalink}` + postHeader + '\r\n' + post.video;
 
         rp.put({
           qs: {
