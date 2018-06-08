@@ -21,7 +21,7 @@ tags:
 ---`
 
 
-let iframeUrlTemplate = `<div class='fluid-width-video-wrapper'><iframe width='100%' height='auto' frameborder='0' allowfullscreen src="https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001"></iframe></div>`;
+let iframeUrlTemplate = `<div class='fluid-width-video-wrapper'>\r\n<iframe width='100%' height='auto' frameborder='0' allowfullscreen src="https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001"></iframe>\r\n</div>`;
 
 /**
  * @param context {WebtaskContext}
@@ -45,6 +45,7 @@ module.exports = function(context, cb) {
             let postUrl = highlight.attr('href');
             var date =  new Date($(node).find('.timestamp').text().replace(/\s\(.*\)/gi, ''));
             let filename = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + '-' + titleWithoutEndDate;
+            let permalink = _.snakeCase(filename);
             highlightArray.push({ 
               filename: filename,
               title: title, 
