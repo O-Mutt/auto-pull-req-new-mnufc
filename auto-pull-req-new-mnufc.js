@@ -39,7 +39,7 @@ module.exports = function(context, cb) {
         _.map($(".views-row .node"), function(node) {
             let highlight = $(node).find('.node-title a');
             
-            let title = highlight.text();
+            let title = highlight.text().replace('HIGHLIGHTS: ', '');
             let titleWithoutEndDate = title.replace(/\|.*/gi, '').replace('\.', '');
             
             let postUrl = highlight.attr('href');
