@@ -71,7 +71,9 @@ module.exports = function(context, cb) {
         Promises.all(videoPromises).then(function(videos) {
             for (var i = 0; i < highlightArray.length; i++) {
               let videoHtml = iframeUrlTemplate.replace('{replaceMe}', videos[i]('video').attr('data-video-id'));
+              let excerptText = videos[i]('.node .field-type-text-long p') .text()
               highlightArray[i].video = videoHtml;
+              highlightArray[i].excerpt = excerptText; 
             }
             SendNewFilesToGitHubRepo(highlightArray);
         });
@@ -96,7 +98,7 @@ module.exports = function(context, cb) {
       var ghPromises = [];
       //Create the header for the markdown
       _.forEach(newPosts, function(post) {
-        var postText = `---\r\ntitle: ${post.title}\r\ndate: ${post.date}\r\npermalink: /${post.permalink}\r\n${postHeader}\r\n${post.video}`;
+        var postText = `---\r\ntitle: ${post.title}\r\ndate: ${post.date}\r\npermalink: /${post.permalink}\r\nexcerpt:${post.excerpt}\r\n${postHeader}\r\n${post.video}`;
 
         // Send each new file to the github triggering jekyll rebuild/deploy to the site
         ghPromises.push(rp.put({
