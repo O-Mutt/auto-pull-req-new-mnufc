@@ -21,7 +21,9 @@ tags:
 ---`
 
 
-let iframeUrlTemplate = `<div class='soccer-video-wrapper'>\r\n<iframe class='soccer-video' width='100%' height='auto' frameborder='0' allowfullscreen src="https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001"></iframe>\r\n</div>`;
+let iframeUrlTemplate = `<div class='soccer-video-wrapper'>
+    <iframe class='soccer-video' width='100%' height='auto' frameborder='0' allowfullscreen src="https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001"></iframe>
+</div>`;
 
 /**
  * @param context {WebtaskContext}
@@ -72,7 +74,7 @@ module.exports = function(context, cb) {
         Promises.all(videoPromises).then(function(videos) {
             for (var i = 0; i < highlightArray.length; i++) {
               let videoHtml = iframeUrlTemplate.replace('{replaceMe}', videos[i]('video').attr('data-video-id'));
-              let excerptText = videos[i]('.node .field-type-text-long p') .text()
+              let excerptText = videos[i]('.node .field-type-text-long p').text();
               highlightArray[i].video = videoHtml;
               highlightArray[i].excerpt = excerptText; 
             }
