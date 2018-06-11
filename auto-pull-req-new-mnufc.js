@@ -110,7 +110,7 @@ module.exports = function(context, cb) {
           },
           json: true,
           method: 'PUT',
-          uri: `https://api.github.com/repos/Mutmatt/mutmatt.github.io/contents/_posts/mnufc/` + post.filename,
+          uri: `https://api.github.com/repos/Mutmatt/mutmatt.github.io/contents/_posts/mnufc/${post.filename}`,
           body: {
             path: '_posts/mnufc',
             message: post.title,
