@@ -9,7 +9,8 @@ const cheerio = require('cheerio');
 const Promises = require('bluebird');
 const hostname = 'https://www.mnufc.com'
 
-let postHeader = `author: Matt Erickson (ME)
+let postHeader = 
+    `author: Matt Erickson (ME)
 layout: post
 categories:
   - MNUFC
@@ -98,7 +99,14 @@ module.exports = function(context, cb) {
       var ghPromises = [];
       //Create the header for the markdown
       _.forEach(newPosts, function(post) {
-        var postText = `---\r\ntitle: ${post.title}\r\ndate: ${post.date}\r\npermalink: /${post.permalink}\r\nexcerpt:${post.excerpt}\r\n${postHeader}\r\n${post.video}`;
+        var postText = 
+            `---
+title: ${post.title}
+date: ${post.date}
+permalink: ${post.permalink}
+excerpt: ${post.excerpt}
+${postHeader}
+${post.video}`;
 
         // Send each new file to the github triggering jekyll rebuild/deploy to the site
         ghPromises.push(rp.put({
