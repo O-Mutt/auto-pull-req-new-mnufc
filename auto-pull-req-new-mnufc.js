@@ -1,5 +1,3 @@
-
-
 'use latest';
 
 const request = require('request');
@@ -12,12 +10,10 @@ const hostname = 'https://www.mnufc.com'
 let postHeader = 
     `author: Matt Erickson (ME)
 layout: post
-categories:
-  - MNUFC
-  - Auto-post
 tags:
-  - MNUFC
-  - Soccer
+  - mnufc
+  - soccer
+  - auto-post
 ---`
 
 
