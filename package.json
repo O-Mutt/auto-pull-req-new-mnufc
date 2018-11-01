@@ -4,7 +4,7 @@
   "description": "",
   "main": "auto-pull-req-new-mnufc.js",
   "scripts": {
-    "build": "tsc --build tsconfig.json",
+    "build": "tsc --build tsconfig.json && prettier --write *.{js,json,css,md,ts}",
     "start": "wt serve --hostname localhost --port 1234 --secret GITHUB_ACCESS_TOKEN=c9e8329216a032b466d39aafd7c4a1372b047101 dist/auto-pull-req-new-mnufc.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -47,7 +47,7 @@
     }
   },
   "lint-staged": {
-    "*.{js,json,css,md}": [
+    "*.{js,json,css,md,ts}": [
       "prettier --write",
       "git add"
     ]
