@@ -16,12 +16,12 @@ async function start(context: any, cb: Function) {
     owner: "Mutmatt",
     repo: "mutmatt.github.io",
     postHeader: `author: Matt Erickson (ME)
-    layout: post
-    tags:
-      - mnufc
-      - soccer
-      - auto-post
-    ---`,
+layout: post
+tags:
+  - mnufc
+  - soccer
+  - auto-post
+---`,
     iframeTemplate: `<div class='soccer-video-wrapper'>
     <iframe class='soccer-video' width='100%' height='auto' frameborder='0' allowfullscreen src="https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001"></iframe>
   </div>`
@@ -38,23 +38,23 @@ async function start(context: any, cb: Function) {
 
   //crawl the page and get all the nodes for each highlight video
   _.map(cheerioHighlightBody(".views-row .node"), function(node: any) {
-    let highlightHtml = cheerioHighlightBody(node).find(".node-title a");
+    const highlightHtml = cheerioHighlightBody(node).find(".node-title a");
 
     //Remove unneeded parts of the title that make things look weird
-    let title = highlightHtml
+    const title = highlightHtml
       .text()
       .replace("HIGHLIGHTS: ", "")
       .replace(/\'/gi, "");
 
-    let titleWithoutEndDate = title.replace(/\|.*/gi, "").replace(".", "");
+    const titleWithoutEndDate = title.replace(/\|.*/gi, "").replace(".", "");
 
-    let titleWOEDAndSpaces = titleWithoutEndDate
+    const titleWOEDAndSpaces = titleWithoutEndDate
       .replace(/\s/gi, "-")
       .replace(/\-$/, "");
 
-    let postUrl = highlightHtml.attr("href");
+    const postUrl = highlightHtml.attr("href");
 
-    var date = new Date(
+    const date = new Date(
       cheerioHighlightBody(node)
         .find(".timestamp")
         .text()
@@ -86,7 +86,7 @@ async function start(context: any, cb: Function) {
 
   //After we get all the nodes for the videos we need to fetch the post page for the video url itself
   _.forEach(highlightArray, function(highlight) {
-    var vidProm = rp({
+    const vidProm = rp({
       uri: options.highlightHost + highlight.postUrl,
       transform: function(body) {
         return cheerio.load(body);
@@ -97,11 +97,6 @@ async function start(context: any, cb: Function) {
 
   //after all the videos come back lets add it to the highlight array and then send it to GH
   const videos = await Promises.all(videoPromises);
-
-  console.log(
-    "checking the videos from the promises back from mnufc",
-    videos.length
-  );
 
   for (var i = 0; i < highlightArray.length; i++) {
     let videoHtml = options.iframeTemplate.replace(
@@ -146,20 +141,11 @@ async function SendNewFilesToGitHubRepo(
     //error occured because we can't get the old posts
   }
 
-  console.log(
-    "send to github",
-    allHighlights.length,
-    previousUnitedPosts.length
-  );
   //We don't want to recreate old files so we will diff the two arrays
   let newPosts = _.differenceWith(allHighlights, previousUnitedPosts, function(
     mnufcValue: Highlight,
     githubObject: any
   ) {
-    console.log(
-      "comparing the filenames ",
-      mnufcValue.filename === githubObject.name
-    ); //mnufcValue.filename, githubObject.name);
     return mnufcValue.filename === githubObject.name;
   });
 
@@ -170,18 +156,14 @@ async function SendNewFilesToGitHubRepo(
   });
 
   const masterSha = masterData.data.object.sha;
-  console.log(masterSha);
-
-  console.log("new posts coming in", newPosts.length);
-
   for (let post of newPosts) {
-    var postText = `---
+    const postText = `---
   title: ${post.title}
   date: ${post.date}
   permalink: ${post.permalink}
   excerpt: ${post.excerpt}
-  ${options.postHeader}
-  ${post.video}`;
+${options.postHeader}
+${post.video}`;
 
     const newBranchName = `refs/heads/${_.snakeCase(post.title)}`;
     // Send each new file to the github triggering jekyll rebuild/deploy to the site
@@ -195,8 +177,6 @@ async function SendNewFilesToGitHubRepo(
     } catch (e) {
       //don't really care about a failure as it is probably just `already exists`
     }
-
-    console.log("hey look github took my request", postText);
 
     await octokit.repos.createFile({
       owner: options.owner,
