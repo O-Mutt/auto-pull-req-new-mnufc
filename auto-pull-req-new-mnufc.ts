@@ -5,7 +5,7 @@ import _ from "lodash";
 import * as cheerio from "cheerio";
 import Promises from "bluebird";
 import { default as Octokit } from "@octokit/rest";
-import Highlight from "./models/highlight";
+import { Url, URL } from "url";
 
 /**
  * @param context {WebtaskContext}
@@ -220,3 +220,23 @@ async function SendNewFilesToGitHubRepo(
 }
 
 module.exports = start;
+
+class Highlight {
+  filename: string | undefined;
+  title: string | undefined;
+  postUrl: Url | undefined;
+  date: Date | undefined;
+  permalink: string | undefined;
+  video: string | undefined;
+  excerpt: string | undefined;
+
+  constructor(initObject: any) {
+    this.filename = initObject.filename || "";
+    this.title = initObject.title || "";
+    this.postUrl = initObject.postUrl || new URL("https://google.com");
+    this.date = initObject.date || new Date();
+    this.permalink = initObject.permalink || "";
+    this.video = initObject.video || "";
+    this.excerpt = initObject.excerpt || "";
+  }
+}

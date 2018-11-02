@@ -24,7 +24,7 @@ const lodash_1 = __importDefault(require("lodash"));
 const cheerio = __importStar(require("cheerio"));
 const bluebird_1 = __importDefault(require("bluebird"));
 const rest_1 = __importDefault(require("@octokit/rest"));
-const highlight_1 = __importDefault(require("./models/highlight"));
+const url_1 = require("url");
 /**
  * @param context {WebtaskContext}
  */
@@ -83,7 +83,7 @@ async function start(context, cb) {
       titleWOEDAndSpaces +
       ".md";
     let permalink = lodash_1.default.snakeCase(filename);
-    let localHightlight = new highlight_1.default({
+    let localHightlight = new Highlight({
       filename: filename,
       title: title,
       postUrl: postUrl,
@@ -209,3 +209,14 @@ async function SendNewFilesToGitHubRepo(options, context, allHighlights) {
   return newPosts;
 }
 module.exports = start;
+class Highlight {
+  constructor(initObject) {
+    this.filename = initObject.filename || "";
+    this.title = initObject.title || "";
+    this.postUrl = initObject.postUrl || new url_1.URL("https://google.com");
+    this.date = initObject.date || new Date();
+    this.permalink = initObject.permalink || "";
+    this.video = initObject.video || "";
+    this.excerpt = initObject.excerpt || "";
+  }
+}
