@@ -24,13 +24,14 @@ const lodash_1 = __importDefault(require("lodash"));
 const cheerio = __importStar(require("cheerio"));
 const bluebird_1 = __importDefault(require("bluebird"));
 const rest_1 = __importDefault(require("@octokit/rest"));
+const highlight_1 = __importDefault(require("./models/highlight"));
 /**
  * @param context {WebtaskContext}
  */
 async function start(context, cb) {
   const options = {
     highlightHost: "https://www.mnufc.com",
-    author: "Mutmatt",
+    owner: "Mutmatt",
     repo: "mutmatt.github.io",
     postHeader: `author: Matt Erickson (ME)
     layout: post
@@ -43,7 +44,6 @@ async function start(context, cb) {
     <iframe class='soccer-video' width='100%' height='auto' frameborder='0' allowfullscreen src="https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001"></iframe>
   </div>`
   };
-  const octokit = new rest_1.default();
   let highlightArray = [];
   let videoPromises = [];
   const cheerioHighlightBody = await request_promise_native_1.default({
@@ -56,9 +56,9 @@ async function start(context, cb) {
   lodash_1.default.map(cheerioHighlightBody(".views-row .node"), function(
     node
   ) {
-    let highlight = cheerioHighlightBody(node).find(".node-title a");
+    let highlightHtml = cheerioHighlightBody(node).find(".node-title a");
     //Remove unneeded parts of the title that make things look weird
-    let title = highlight
+    let title = highlightHtml
       .text()
       .replace("HIGHLIGHTS: ", "")
       .replace(/\'/gi, "");
@@ -66,7 +66,7 @@ async function start(context, cb) {
     let titleWOEDAndSpaces = titleWithoutEndDate
       .replace(/\s/gi, "-")
       .replace(/\-$/, "");
-    let postUrl = highlight.attr("href");
+    let postUrl = highlightHtml.attr("href");
     var date = new Date(
       cheerioHighlightBody(node)
         .find(".timestamp")
@@ -83,13 +83,14 @@ async function start(context, cb) {
       titleWOEDAndSpaces +
       ".md";
     let permalink = lodash_1.default.snakeCase(filename);
-    highlightArray.push({
+    let localHightlight = new highlight_1.default({
       filename: filename,
       title: title,
       postUrl: postUrl,
       date: date,
       permalink: permalink
     });
+    highlightArray.push(localHightlight);
   });
   //After we get all the nodes for the videos we need to fetch the post page for the video url itself
   lodash_1.default.forEach(highlightArray, function(highlight) {
@@ -116,90 +117,95 @@ async function start(context, cb) {
     highlightArray[i].video = videoHtml;
     highlightArray[i].excerpt = excerptText;
   }
-  await SendNewFilesToGitHubRepo(highlightArray);
-  async function SendNewFilesToGitHubRepo(allHighlights) {
-    const previousMNUFCPosts = await request_promise_native_1.default({
-      qs: {
-        //@ts-ignore
-        access_token: context.secrets.GITHUB_ACCESS_TOKEN
-      },
-      headers: {
-        "User-Agent": "MN UFC auto blogger"
-      },
-      json: true,
-      uri: `https://api.github.com/repos/Mutmatt/mutmatt.github.io/contents/_posts/mnufc/`
+  const newPosts = await SendNewFilesToGitHubRepo(
+    options,
+    context,
+    highlightArray
+  );
+  cb(null, { newPosts });
+}
+async function SendNewFilesToGitHubRepo(options, context, allHighlights) {
+  const octokit = new rest_1.default();
+  octokit.authenticate({
+    type: "oauth",
+    token: context.secrets.GITHUB_ACCESS_TOKEN
+  });
+  let previousUnitedPosts = [];
+  try {
+    const postsRequest = await octokit.repos.getContent({
+      owner: options.owner,
+      repo: options.repo,
+      path: `_posts/mnufc`,
+      ref: `heads/master`
     });
-    console.log(
-      "send to github",
-      allHighlights.length,
-      previousMNUFCPosts.length
-    );
-    //We don't want to recreate old files so we will diff the two arrays
-    let newPosts = lodash_1.default.differenceWith(
-      allHighlights,
-      previousMNUFCPosts,
-      function(mnufcValue, githubObject) {
-        console.log(
-          "comparing the filenames ",
-          mnufcValue.filename === githubObject.name
-        ); //mnufcValue.filename, githubObject.name);
-        return false;
-      }
-    );
-    console.log("new posts coming in", newPosts.length);
-    let ghPromises = [];
-    //Create the header for the markdown
-    await lodash_1.default.forEach(newPosts, async function(post) {
-      var postText = `---
+    previousUnitedPosts = postsRequest.data;
+  } catch (e) {
+    //error occured because we can't get the old posts
+  }
+  console.log(
+    "send to github",
+    allHighlights.length,
+    previousUnitedPosts.length
+  );
+  //We don't want to recreate old files so we will diff the two arrays
+  let newPosts = lodash_1.default.differenceWith(
+    allHighlights,
+    previousUnitedPosts,
+    function(mnufcValue, githubObject) {
+      console.log(
+        "comparing the filenames ",
+        mnufcValue.filename === githubObject.name
+      ); //mnufcValue.filename, githubObject.name);
+      return mnufcValue.filename === githubObject.name;
+    }
+  );
+  const masterData = await octokit.gitdata.getReference({
+    owner: options.owner,
+    repo: options.repo,
+    ref: `heads/master`
+  });
+  const masterSha = masterData.data.object.sha;
+  console.log(masterSha);
+  console.log("new posts coming in", newPosts.length);
+  for (let post of newPosts) {
+    var postText = `---
   title: ${post.title}
   date: ${post.date}
   permalink: ${post.permalink}
   excerpt: ${post.excerpt}
   ${options.postHeader}
   ${post.video}`;
-      // Send each new file to the github triggering jekyll rebuild/deploy to the site
-      console.log("we gotta iterate over the new posts");
-      //const shaVal = crypto.createHash('sha1').update(`refs/heads/${post.date.toString()}`).digest('hex');
-      console.log("nerd alert \r\n \r\n");
-      const masterData = await octokit.gitdata.getReference({
-        owner: options.author,
+    const newBranchName = `refs/heads/${lodash_1.default.snakeCase(
+      post.title
+    )}`;
+    // Send each new file to the github triggering jekyll rebuild/deploy to the site
+    try {
+      await octokit.gitdata.createReference({
+        owner: options.owner,
         repo: options.repo,
-        ref: `heads/master`
-      });
-      const masterSha = masterData.data.object.sha;
-      console.log(masterSha);
-      console.log("hello world \r\n \r\n");
-      const result = await octokit.gitdata.createReference({
-        owner: options.author,
-        repo: options.repo,
-        ref: `refs/heads/${post.date.toString()}`,
+        ref: newBranchName,
         sha: masterSha
       });
-      console.log("hey look github took my request", result);
-      ghPromises.push(
-        request_promise_native_1.default.put({
-          qs: {
-            access_token: context.secrets.GITHUB_ACCESS_TOKEN
-          },
-          headers: {
-            "User-Agent": "MN UFC auto blogger"
-          },
-          json: true,
-          method: "PUT",
-          uri: `https://api.github.com/repos/Mutmatt/mutmatt.github.io/contents/_posts/mnufc/${
-            post.filename
-          }`,
-          body: {
-            path: "_posts/mnufc",
-            message: post.title,
-            content: Buffer.from(postText).toString("base64")
-          }
-        })
-      );
+    } catch (e) {
+      //don't really care about a failure as it is probably just `already exists`
+    }
+    console.log("hey look github took my request", postText);
+    await octokit.repos.createFile({
+      owner: options.owner,
+      repo: options.repo,
+      path: `_posts/mnufc/${post.filename}`,
+      message: post.title || "Default MNUFC hightlight",
+      content: Buffer.from(postText).toString("base64"),
+      branch: newBranchName
     });
-    //After all github files are created return the new posts
-    //await Promises.all(ghPromises)
-    cb(null, { newPosts });
+    const result = await octokit.pullRequests.create({
+      owner: options.owner,
+      repo: options.repo,
+      title: post.title || "Default MNUFC hightlight",
+      head: newBranchName,
+      base: `master`
+    });
   }
+  return newPosts;
 }
 module.exports = start;
