@@ -5,7 +5,7 @@
   "main": "auto-pull-req-new-mnufc.js",
   "scripts": {
     "build": "tsc --build tsconfig.json && prettier --write *.{js,json,css,md,ts}",
-    "start": "wt serve --hostname localhost --port 1234 --secret GITHUB_ACCESS_TOKEN=03d69487743e2d23664ef0d349e214cf434d81c4 auto-pull-req-new-mnufc.js",
+    "start": "wt serve --hostname localhost --port 1234 --secret GITHUB_ACCESS_TOKEN={insert_your_key} auto-pull-req-new-mnufc.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
