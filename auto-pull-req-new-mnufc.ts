@@ -30,7 +30,7 @@ tags:
   let highlightArray: Highlight[] = [];
   let videoPromises: any[] = [];
   const cheerioHighlightBody = await rp({
-    uri: `${options.highlightHost}/video-channels/match-highlights`,
+    uri: `${options.highlightHost}/video/match-highlights`,
     transform: function(body: any) {
       return cheerio.load(body);
     }
