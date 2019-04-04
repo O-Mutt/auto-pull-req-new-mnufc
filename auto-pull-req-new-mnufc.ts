@@ -4,7 +4,7 @@ import rp from "request-promise-native";
 import _ from "lodash";
 import * as cheerio from "cheerio";
 import Promises from "bluebird";
-import { default as Octokit } from "@octokit/rest";
+import Octokit from "@octokit/rest";
 import { Url, URL } from "url";
 
 /**
@@ -130,7 +130,7 @@ async function SendNewFilesToGitHubRepo(
 
   let previousUnitedPosts = [];
   try {
-    const postsRequest = await octokit.repos.getContent({
+    const postsRequest = await octokit.repos.getContents({
       owner: options.owner,
       repo: options.repo,
       path: `_posts/mnufc`,
@@ -149,7 +149,7 @@ async function SendNewFilesToGitHubRepo(
     return mnufcValue.filename === githubObject.name;
   });
 
-  const masterData = await octokit.gitdata.getReference({
+  const masterData = await octokit.git.getRef({
     owner: options.owner,
     repo: options.repo,
     ref: `heads/master`
@@ -168,7 +168,7 @@ ${post.video}`;
     const newBranchName = `refs/heads/${_.snakeCase(post.title)}`;
     // Send each new file to the github triggering jekyll rebuild/deploy to the site
     try {
-      await octokit.gitdata.createReference({
+      await octokit.git.createRef({
         owner: options.owner,
         repo: options.repo,
         ref: newBranchName,
@@ -187,7 +187,7 @@ ${post.video}`;
       branch: newBranchName
     });
 
-    const result = await octokit.pullRequests.create({
+    const result = await octokit.pulls.create({
       owner: options.owner,
       repo: options.repo,
       title: post.title || "Default MNUFC hightlight",
