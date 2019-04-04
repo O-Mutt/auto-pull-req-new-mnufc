@@ -184,7 +184,7 @@ function start(context, cb) {
           return [
             4 /*yield*/,
             request_promise_native_1.default({
-              uri: options.highlightHost + "/video/match-highlights",
+              uri: options.highlightHost + "/videos/match-highlights",
               transform: function(body) {
                 return cheerio.load(body);
               }
