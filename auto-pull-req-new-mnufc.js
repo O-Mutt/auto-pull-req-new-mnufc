@@ -144,7 +144,7 @@ var __importStar =
     result["default"] = mod;
     return result;
   };
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 var request_promise_native_1 = __importDefault(
   require("request-promise-native")
 );
@@ -183,7 +183,7 @@ function start(context, cb) {
           videoPromises = [];
           return [
             4 /*yield*/,
-            request_promise_native_1.default({
+            request_promise_native_1["default"]({
               uri: options.highlightHost + "/videos/match-highlights",
               transform: function(body) {
                 return cheerio.load(body);
@@ -193,7 +193,7 @@ function start(context, cb) {
         case 1:
           cheerioHighlightBody = _a.sent();
           //crawl the page and get all the nodes for each highlight video
-          lodash_1.default.map(
+          lodash_1["default"].map(
             cheerioHighlightBody(".views-row .node"),
             function(node) {
               var highlightHtml = cheerioHighlightBody(node).find(
@@ -226,7 +226,7 @@ function start(context, cb) {
                 "-" +
                 titleWOEDAndSpaces +
                 ".md";
-              var permalink = lodash_1.default.snakeCase(filename);
+              var permalink = lodash_1["default"].snakeCase(filename);
               var localHightlight = new Highlight({
                 filename: filename,
                 title: title,
@@ -238,8 +238,8 @@ function start(context, cb) {
             }
           );
           //After we get all the nodes for the videos we need to fetch the post page for the video url itself
-          lodash_1.default.forEach(highlightArray, function(highlight) {
-            var vidProm = request_promise_native_1.default({
+          lodash_1["default"].forEach(highlightArray, function(highlight) {
+            var vidProm = request_promise_native_1["default"]({
               uri: options.highlightHost + highlight.postUrl,
               transform: function(body) {
                 return cheerio.load(body);
@@ -247,7 +247,7 @@ function start(context, cb) {
             });
             videoPromises.push(vidProm);
           });
-          return [4 /*yield*/, bluebird_1.default.all(videoPromises)];
+          return [4 /*yield*/, bluebird_1["default"].all(videoPromises)];
         case 2:
           videos = _a.sent();
           for (i = 0; i < highlightArray.length; i++) {
@@ -290,7 +290,7 @@ function SendNewFilesToGitHubRepo(options, context, allHighlights) {
     return __generator(this, function(_a) {
       switch (_a.label) {
         case 0:
-          octokit = new rest_1.default();
+          octokit = new rest_1["default"]();
           octokit.authenticate({
             type: "oauth",
             token: context.secrets.GITHUB_ACCESS_TOKEN
@@ -316,7 +316,7 @@ function SendNewFilesToGitHubRepo(options, context, allHighlights) {
           e_1 = _a.sent();
           return [3 /*break*/, 4];
         case 4:
-          newPosts = lodash_1.default.differenceWith(
+          newPosts = lodash_1["default"].differenceWith(
             allHighlights,
             previousUnitedPosts,
             function(mnufcValue, githubObject) {
@@ -353,7 +353,7 @@ function SendNewFilesToGitHubRepo(options, context, allHighlights) {
             "\n" +
             post.video;
           newBranchName =
-            "refs/heads/" + lodash_1.default.snakeCase(post.title);
+            "refs/heads/" + lodash_1["default"].snakeCase(post.title);
           _a.label = 7;
         case 7:
           _a.trys.push([7, 9, , 10]);
