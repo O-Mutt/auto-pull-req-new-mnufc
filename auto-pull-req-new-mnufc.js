@@ -53,50 +53,53 @@ tags:
     }
   });
   //crawl the page and get all the nodes for each highlight video
-  lodash_1.default.map(cheerioHighlightBody(".views-row .node"), function(
-    node
-  ) {
-    const highlightHtml = cheerioHighlightBody(node).find(".node-title a");
-    //Remove unneeded parts of the title that make things look weird
-    const title = highlightHtml
-      .text()
-      .replace("HIGHLIGHTS: ", "")
-      .replace(/\'/gi, "");
-    const titleWithoutEndDate = title.replace(/\|.*/gi, "").replace(".", "");
-    const titleWOEDAndSpaces = titleWithoutEndDate
-      .replace(/\s/gi, "-")
-      .replace(/\-$/, "");
-    const postUrl = highlightHtml.attr("href");
-    const date = new Date(
-      cheerioHighlightBody(node)
-        .find(".timestamp")
+  lodash_1.default.map(
+    cheerioHighlightBody(".views-row .node"),
+    function mapTheNodes(node) {
+      const highlightHtml = cheerioHighlightBody(node).find(".node-title a");
+      //Remove unneeded parts of the title that make things look weird
+      const title = highlightHtml
         .text()
-        .replace(/\s\(.*\)/gi, "")
-    );
-    let filename =
-      date.getFullYear() +
-      "-" +
-      (date.getMonth() + 1) +
-      "-" +
-      date.getDate() +
-      "-" +
-      titleWOEDAndSpaces +
-      ".md";
-    let permalink = lodash_1.default.snakeCase(filename);
-    let localHightlight = new Highlight({
-      filename: filename,
-      title: title,
-      postUrl: postUrl,
-      date: date,
-      permalink: permalink
-    });
-    highlightArray.push(localHightlight);
-  });
+        .replace("HIGHLIGHTS: ", "")
+        .replace(/\'/gi, "");
+      const titleWithoutEndDate = title.replace(/\|.*/gi, "").replace(".", "");
+      const titleWOEDAndSpaces = titleWithoutEndDate
+        .replace(/\s/gi, "-")
+        .replace(/\-$/, "");
+      const postUrl = highlightHtml.attr("href");
+      const date = new Date(
+        cheerioHighlightBody(node)
+          .find(".timestamp")
+          .text()
+          .replace(/\s\(.*\)/gi, "")
+      );
+      let filename =
+        date.getFullYear() +
+        "-" +
+        (date.getMonth() + 1) +
+        "-" +
+        date.getDate() +
+        "-" +
+        titleWOEDAndSpaces +
+        ".md";
+      let permalink = lodash_1.default.snakeCase(filename);
+      let localHightlight = new Highlight({
+        filename: filename,
+        title: title,
+        postUrl: postUrl,
+        date: date,
+        permalink: permalink
+      });
+      highlightArray.push(localHightlight);
+    }
+  );
   //After we get all the nodes for the videos we need to fetch the post page for the video url itself
-  lodash_1.default.forEach(highlightArray, function(highlight) {
+  lodash_1.default.forEach(highlightArray, function forEachHighlight(
+    highlight
+  ) {
     const vidProm = request_promise_native_1.default({
       uri: options.highlightHost + highlight.postUrl,
-      transform: function(body) {
+      transform: function transformTheBody(body) {
         return cheerio.load(body);
       }
     });
@@ -121,10 +124,8 @@ tags:
   cb(null, { newPosts });
 }
 async function SendNewFilesToGitHubRepo(options, context, allHighlights) {
-  const octokit = new rest_1.default();
-  octokit.authenticate({
-    type: "oauth",
-    token: context.secrets.GITHUB_ACCESS_TOKEN
+  const octokit = new rest_1.default({
+    auth: `${context.secrets.GITHUB_ACCESS_TOKEN}`
   });
   let previousUnitedPosts = [];
   try {
@@ -142,15 +143,16 @@ async function SendNewFilesToGitHubRepo(options, context, allHighlights) {
   let newPosts = lodash_1.default.differenceWith(
     allHighlights,
     previousUnitedPosts,
-    function(mnufcValue, githubObject) {
+    function checkPreviousPostVsNew(mnufcValue, githubObject) {
       return mnufcValue.filename === githubObject.name;
     }
   );
-  const masterData = await octokit.git.getRef({
+  const refParams = {
     owner: options.owner,
     repo: options.repo,
     ref: `heads/master`
-  });
+  };
+  const masterData = await octokit.git.getRef(refParams);
   const masterSha = masterData.data.object.sha;
   for (let post of newPosts) {
     const postText = `---
@@ -182,13 +184,14 @@ ${post.video}`;
       content: Buffer.from(postText).toString("base64"),
       branch: newBranchName
     });
-    const result = await octokit.pulls.create({
+    const pullParams = {
       owner: options.owner,
       repo: options.repo,
-      title: post.title || "Default MNUFC hightlight",
-      head: newBranchName,
-      base: `master`
-    });
+      title: post.title || `Default MNUFC Highlight`,
+      base: `master`,
+      head: newBranchName
+    };
+    const result = await octokit.pulls.create(pullParams);
   }
   return newPosts;
 }

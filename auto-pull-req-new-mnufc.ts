@@ -4,7 +4,7 @@ import rp from "request-promise-native";
 import _ from "lodash";
 import * as cheerio from "cheerio";
 import Promises from "bluebird";
-import Octokit from "@octokit/rest";
+import Octokit, { GitGetRefParams, PullsCreateParams } from "@octokit/rest";
 import { Url, URL } from "url";
 
 /**
@@ -37,7 +37,9 @@ tags:
   });
 
   //crawl the page and get all the nodes for each highlight video
-  _.map(cheerioHighlightBody(".views-row .node"), function(node: any) {
+  _.map(cheerioHighlightBody(".views-row .node"), function mapTheNodes(
+    node: any
+  ) {
     const highlightHtml = cheerioHighlightBody(node).find(".node-title a");
 
     //Remove unneeded parts of the title that make things look weird
@@ -85,10 +87,10 @@ tags:
   });
 
   //After we get all the nodes for the videos we need to fetch the post page for the video url itself
-  _.forEach(highlightArray, function(highlight) {
+  _.forEach(highlightArray, function forEachHighlight(highlight) {
     const vidProm = rp({
       uri: options.highlightHost + highlight.postUrl,
-      transform: function(body) {
+      transform: function transformTheBody(body) {
         return cheerio.load(body);
       }
     });
@@ -122,10 +124,8 @@ async function SendNewFilesToGitHubRepo(
   context: any,
   allHighlights: Highlight[]
 ) {
-  const octokit = new Octokit();
-  octokit.authenticate({
-    type: "oauth",
-    token: context.secrets.GITHUB_ACCESS_TOKEN
+  const octokit = new Octokit({
+    auth: `${context.secrets.GITHUB_ACCESS_TOKEN}`
   });
 
   let previousUnitedPosts = [];
@@ -142,18 +142,20 @@ async function SendNewFilesToGitHubRepo(
   }
 
   //We don't want to recreate old files so we will diff the two arrays
-  let newPosts = _.differenceWith(allHighlights, previousUnitedPosts, function(
-    mnufcValue: Highlight,
-    githubObject: any
-  ) {
-    return mnufcValue.filename === githubObject.name;
-  });
+  let newPosts = _.differenceWith(
+    allHighlights,
+    previousUnitedPosts,
+    function checkPreviousPostVsNew(mnufcValue: Highlight, githubObject: any) {
+      return mnufcValue.filename === githubObject.name;
+    }
+  );
 
-  const masterData = await octokit.git.getRef({
+  const refParams: GitGetRefParams = {
     owner: options.owner,
     repo: options.repo,
     ref: `heads/master`
-  });
+  };
+  const masterData = await octokit.git.getRef(refParams);
 
   const masterSha = masterData.data.object.sha;
   for (let post of newPosts) {
@@ -187,13 +189,14 @@ ${post.video}`;
       branch: newBranchName
     });
 
-    const result = await octokit.pulls.create({
+    const pullParams: PullsCreateParams = {
       owner: options.owner,
       repo: options.repo,
-      title: post.title || "Default MNUFC hightlight",
-      head: newBranchName,
-      base: `master`
-    });
+      title: post.title || `Default MNUFC Highlight`,
+      base: `master`,
+      head: newBranchName
+    };
+    const result = await octokit.pulls.create(pullParams);
   }
 
   return newPosts;
