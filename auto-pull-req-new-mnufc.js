@@ -39,6 +39,7 @@ tags:
   - mnufc
   - soccer
   - auto-post
+hidden: true
 ---`,
     iframeTemplate: `<div class='soccer-video-wrapper'>
     <iframe class='soccer-video' width='100%' height='auto' frameborder='0' allowfullscreen src="https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001"></iframe>
@@ -156,10 +157,10 @@ async function SendNewFilesToGitHubRepo(options, context, allHighlights) {
   const masterSha = masterData.data.object.sha;
   for (let post of newPosts) {
     const postText = `---
-  title: ${post.title}
-  date: ${post.date}
-  permalink: ${post.permalink}
-  excerpt: ${post.excerpt}
+title: ${post.title}
+date: ${post.date}
+permalink: ${post.permalink}
+excerpt: ${post.excerpt}
 ${options.postHeader}
 ${post.video}`;
     const newBranchName = `refs/heads/${lodash_1.default.snakeCase(
