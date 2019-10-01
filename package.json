@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/Mutmatt/auto-pull-req-new-mnufc#readme",
   "dependencies": {
-    "@octokit/rest": "^16.23.2",
+    "@octokit/rest": "^16.30.0",
     "bluebird": "^3.5.5",
     "cheerio": "^1.0.0-rc.2",
     "github": "^14.0.0",
