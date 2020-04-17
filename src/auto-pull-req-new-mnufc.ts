@@ -2,14 +2,13 @@ import rp from 'request-promise-native';
 import _ from 'lodash';
 import * as cheerio from 'cheerio';
 import Promises from 'bluebird';
-import { Octokit } from '@octokit/core';
-import { PullsCreateParams, GitGetRefParams } from '@octokit/plugin-rest-endpoint-methods/dist-types/generated/types';
-import { Url, URL } from 'url';
+import { Highlight } from './highlight';
+import { SendNewFilesToGitHubRepo } from './SendFilesToGitHub';
 
 /**
- * @param context {WebtaskContext}
+ * @param context { Lambda Context}
  */
-async function start(context: any, cb: Function) {
+async function start(context: any) {
   const options = {
     highlightHost: 'https://www.mnufc.com',
     owner: 'Mutmatt',
@@ -116,110 +115,8 @@ hidden: true
     highlightArray
   );
 
-  cb(null, { newPosts });
-}
-
-async function SendNewFilesToGitHubRepo(
-  options: any,
-  context: any,
-  allHighlights: Highlight[]
-) {
-  const octokit = new Octokit({
-    auth: `${context.secrets.GITHUB_ACCESS_TOKEN}`
-  });
-
-  let previousUnitedPosts = [];
-  try {
-    const postsRequest = await octokit.repos.getContents({
-      owner: options.owner,
-      repo: options.repo,
-      path: `_posts/mnufc`,
-      ref: `heads/master`
-    });
-    previousUnitedPosts = postsRequest.data;
-  } catch (e) {
-    //error occured because we can't get the old posts
-  }
-
-  //We don't want to recreate old files so we will diff the two arrays
-  let newPosts = _.differenceWith(
-    allHighlights,
-    previousUnitedPosts,
-    function checkPreviousPostVsNew(mnufcValue: Highlight, githubObject: any) {
-      return mnufcValue.filename === githubObject.name;
-    }
-  );
-
-  const refParams: GitGetRefParams = {
-    owner: options.owner,
-    repo: options.repo,
-    ref: `heads/master`
-  };
-  const masterData = await octokit.git.getRef(refParams);
-
-  const masterSha = masterData.data.object.sha;
-  for (let post of newPosts) {
-    const postText = `---
-title: ${post.title}
-date: ${post.date}
-permalink: ${post.permalink}
-excerpt: ${post.excerpt}
-${options.postHeader}
-${post.video}`;
-
-    const newBranchName = `refs/heads/${_.snakeCase(post.title)}`;
-    // Send each new file to the github triggering jekyll rebuild/deploy to the site
-    try {
-      await octokit.git.createRef({
-        owner: options.owner,
-        repo: options.repo,
-        ref: newBranchName,
-        sha: masterSha
-      });
-    } catch (e) {
-      //don't really care about a failure as it is probably just `already exists`
-    }
-
-    await octokit.repos.createFile({
-      owner: options.owner,
-      repo: options.repo,
-      path: `_posts/mnufc/${post.filename}`,
-      message: post.title || 'Default MNUFC hightlight',
-      content: Buffer.from(postText).toString('base64'),
-      branch: newBranchName
-    });
-
-    const pullParams: PullsCreateParams = {
-      owner: options.owner,
-      repo: options.repo,
-      title: post.title || `Default MNUFC Highlight`,
-      base: `master`,
-      head: newBranchName
-    };
-    const result = await octokit.pulls.create(pullParams);
-  }
-
   return newPosts;
 }
 
-module.exports = start;
+export default start;
 
-class Highlight {
-  filename: string | undefined;
-  title: string | undefined;
-  postUrl: Url | undefined;
-  date: Date | undefined;
-  permalink: string | undefined;
-  video: string | undefined;
-  excerpt: string | undefined;
-
-  constructor(initObject: any) {
-    this.filename = initObject.filename || '';
-    this.title = initObject.title || '';
-    this.postUrl = initObject.postUrl || new URL('https://google.com');
-    this.date = initObject.date || new Date();
-    this.permalink = initObject.permalink || '';
-    this.video = initObject.video || '';
-    this.excerpt = initObject.excerpt || '';
-  }
-}
