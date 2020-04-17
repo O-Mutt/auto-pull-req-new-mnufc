@@ -1,20 +1,19 @@
-"use latest";
-
-import rp from "request-promise-native";
-import _ from "lodash";
-import * as cheerio from "cheerio";
-import Promises from "bluebird";
-import Octokit, { GitGetRefParams, PullsCreateParams } from "@octokit/rest";
-import { Url, URL } from "url";
+import rp from 'request-promise-native';
+import _ from 'lodash';
+import * as cheerio from 'cheerio';
+import Promises from 'bluebird';
+import { Octokit } from '@octokit/core';
+import { PullsCreateParams, GitGetRefParams } from '@octokit/plugin-rest-endpoint-methods/dist-types/generated/types';
+import { Url, URL } from 'url';
 
 /**
  * @param context {WebtaskContext}
  */
 async function start(context: any, cb: Function) {
   const options = {
-    highlightHost: "https://www.mnufc.com",
-    owner: "Mutmatt",
-    repo: "mutmatt.github.io",
+    highlightHost: 'https://www.mnufc.com',
+    owner: 'Mutmatt',
+    repo: 'mutmatt.github.io',
     postHeader: `author: Matt Erickson (ME)
 layout: post
 tags:
@@ -24,7 +23,7 @@ tags:
 hidden: true
 ---`,
     iframeTemplate: `<div class='soccer-video-wrapper'>
-    <iframe class='soccer-video' width='100%' height='auto' frameborder='0' allowfullscreen src="https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001"></iframe>
+    <iframe class='soccer-video' width='100%' height='auto' frameborder='0' allowfullscreen src='https://www.mnufc.com/iframe-video?brightcove_id={replaceMe}&brightcove_player_id=default&brightcove_account_id=5534894110001'></iframe>
   </div>`
   };
 
@@ -38,41 +37,41 @@ hidden: true
   });
 
   //crawl the page and get all the nodes for each highlight video
-  _.map(cheerioHighlightBody(".views-row .node"), function mapTheNodes(
+  _.map(cheerioHighlightBody('.views-row .node'), function mapTheNodes(
     node: any
   ) {
-    const highlightHtml = cheerioHighlightBody(node).find(".node-title a");
+    const highlightHtml = cheerioHighlightBody(node).find('.node-title a');
 
     //Remove unneeded parts of the title that make things look weird
     const title = highlightHtml
       .text()
-      .replace("HIGHLIGHTS: ", "")
-      .replace(/\'/gi, "");
+      .replace('HIGHLIGHTS: ', '')
+      .replace(/\'/gi, '');
 
-    const titleWithoutEndDate = title.replace(/\|.*/gi, "").replace(".", "");
+    const titleWithoutEndDate = title.replace(/\|.*/gi, '').replace('.', '');
 
     const titleWOEDAndSpaces = titleWithoutEndDate
-      .replace(/\s/gi, "-")
-      .replace(/\-$/, "");
+      .replace(/\s/gi, '-')
+      .replace(/\-$/, '');
 
-    const postUrl = highlightHtml.attr("href");
+    const postUrl = highlightHtml.attr('href');
 
     const date = new Date(
       cheerioHighlightBody(node)
-        .find(".timestamp")
+        .find('.timestamp')
         .text()
-        .replace(/\s\(.*\)/gi, "")
+        .replace(/\s\(.*\)/gi, '')
     );
 
     let filename =
       date.getFullYear() +
-      "-" +
+      '-' +
       (date.getMonth() + 1) +
-      "-" +
+      '-' +
       date.getDate() +
-      "-" +
+      '-' +
       titleWOEDAndSpaces +
-      ".md";
+      '.md';
 
     let permalink = _.snakeCase(filename);
 
@@ -103,10 +102,10 @@ hidden: true
 
   for (var i = 0; i < highlightArray.length; i++) {
     let videoHtml = options.iframeTemplate.replace(
-      "{replaceMe}",
-      videos[i]("video").attr("data-video-id")
+      '{replaceMe}',
+      videos[i]('video').attr('data-video-id')
     );
-    let excerptText = videos[i](".node .field-type-text-long p").text();
+    let excerptText = videos[i]('.node .field-type-text-long p').text();
     highlightArray[i].video = videoHtml;
     highlightArray[i].excerpt = excerptText;
   }
@@ -185,8 +184,8 @@ ${post.video}`;
       owner: options.owner,
       repo: options.repo,
       path: `_posts/mnufc/${post.filename}`,
-      message: post.title || "Default MNUFC hightlight",
-      content: Buffer.from(postText).toString("base64"),
+      message: post.title || 'Default MNUFC hightlight',
+      content: Buffer.from(postText).toString('base64'),
       branch: newBranchName
     });
 
@@ -215,12 +214,12 @@ class Highlight {
   excerpt: string | undefined;
 
   constructor(initObject: any) {
-    this.filename = initObject.filename || "";
-    this.title = initObject.title || "";
-    this.postUrl = initObject.postUrl || new URL("https://google.com");
+    this.filename = initObject.filename || '';
+    this.title = initObject.title || '';
+    this.postUrl = initObject.postUrl || new URL('https://google.com');
     this.date = initObject.date || new Date();
-    this.permalink = initObject.permalink || "";
-    this.video = initObject.video || "";
-    this.excerpt = initObject.excerpt || "";
+    this.permalink = initObject.permalink || '';
+    this.video = initObject.video || '';
+    this.excerpt = initObject.excerpt || '';
   }
 }
