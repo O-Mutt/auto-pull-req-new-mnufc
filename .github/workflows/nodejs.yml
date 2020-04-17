@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - run: zip lambda.zip src/
+      - run: zip lambda.zip src/*
       - uses: stcalica/update-lambda@master
         with:
           package: lambda.zip
