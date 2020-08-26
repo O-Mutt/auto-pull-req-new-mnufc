@@ -1,40 +1,48 @@
 import { Highlight } from './highlight';
-import { Octokit } from '@octokit/core';
-import { PullsCreateParams, GitGetRefParams } from '@octokit/plugin-rest-endpoint-methods/dist-types/generated/types';
+import { Octokit } from '@octokit/rest';
+//import { PullsCreateParams, GitGetRefParams } from '@octokit/plugin-rest-endpoint-methods/dist-types/generated/types';
 import _ from 'lodash';
+import { Logger } from "tslog";
+import { ReposGetContentResponseData } from '@octokit/types';
+
+const log: Logger = new Logger({ name: "SendFilesToGitHub" });
 
 export async function SendNewFilesToGitHubRepo(
   options: any,
-  context: any,
-  allHighlights: Highlight[]
+  highlightsFromWebsite: Highlight[]
 ) {
   const octokit = new Octokit({
-    auth: `${context.secrets.GITHUB_ACCESS_TOKEN}`
+    auth: `${process.env.GITHUB_ACCESS_TOKEN}`
   });
-
-  let previousUnitedPosts = [];
+  
+  let existingRepoPosts: ReposGetContentResponseData[] = [];
   try {
-    const postsRequest = await octokit.repos.getContents({
+    const postsRequest = await octokit.repos.getContent({
       owner: options.owner,
       repo: options.repo,
       path: `_posts/mnufc`,
       ref: `heads/master`
     });
-    previousUnitedPosts = postsRequest.data;
+    existingRepoPosts = postsRequest.data as unknown as ReposGetContentResponseData[];
+    log.info(`The number of posts we already have ${existingRepoPosts}`);
   } catch (e) {
+    log.error(`Error in getting content from mnufc repo`, e);
     //error occured because we can't get the old posts
   }
 
   //We don't want to recreate old files so we will diff the two arrays
-  let newPosts = _.differenceWith(
-    allHighlights,
-    previousUnitedPosts,
-    function checkPreviousPostVsNew(mnufcValue: Highlight, githubObject: any) {
+  let newPosts = _.differenceWith<Highlight, ReposGetContentResponseData>(
+    highlightsFromWebsite,
+    existingRepoPosts,
+    function checkPreviousPostVsNew(mnufcValue: Highlight, githubObject: ReposGetContentResponseData) {
+      log.debug(`match the existing files for a diff from the old ${mnufcValue.filename} to the new ${githubObject.name}. Do they match ${mnufcValue.filename === githubObject.name}`);
       return mnufcValue.filename === githubObject.name;
     }
   );
+  log.info(`New posts length ${newPosts.length}`);
 
-  const refParams: GitGetRefParams = {
+
+  const refParams = {
     owner: options.owner,
     repo: options.repo,
     ref: `heads/master`
@@ -61,10 +69,10 @@ ${post.video}`;
         sha: masterSha
       });
     } catch (e) {
-      //don't really care about a failure as it is probably just `already exists`
+      log.prettyError(e);
     }
 
-    await octokit.repos.createFile({
+    const createNewFileContents = await octokit.repos.createOrUpdateFileContents({
       owner: options.owner,
       repo: options.repo,
       path: `_posts/mnufc/${post.filename}`,
@@ -72,8 +80,9 @@ ${post.video}`;
       content: Buffer.from(postText).toString('base64'),
       branch: newBranchName
     });
+    log.info("Creating a new file contents", createNewFileContents.data.commit.sha);
 
-    const pullParams: PullsCreateParams = {
+    const pullParams = {
       owner: options.owner,
       repo: options.repo,
       title: post.title || `Default MNUFC Highlight`,
@@ -81,6 +90,7 @@ ${post.video}`;
       head: newBranchName
     };
     const result = await octokit.pulls.create(pullParams);
+    log.info("Creating the new PR", result.url);
   }
 
   return newPosts;

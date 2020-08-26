@@ -4,11 +4,14 @@ import * as cheerio from 'cheerio';
 import Promises from 'bluebird';
 import { Highlight } from './highlight';
 import { SendNewFilesToGitHubRepo } from './SendFilesToGitHub';
+import { Logger } from "tslog";
+ 
+const log: Logger = new Logger({ name: "AutoPuller" });
 
 /**
- * @param context { Lambda Context}
+ *
  */
-async function start(context: any) {
+async function start() {
   const options = {
     highlightHost: 'https://www.mnufc.com',
     owner: 'Mutmatt',
@@ -35,6 +38,8 @@ hidden: true
     }
   });
 
+  log.info(`Loaded the match highlights`);
+
   //crawl the page and get all the nodes for each highlight video
   _.map(cheerioHighlightBody('.views-row .node'), function mapTheNodes(
     node: any
@@ -46,7 +51,7 @@ hidden: true
       .text()
       .replace('HIGHLIGHTS: ', '')
       .replace(/\'/gi, '');
-
+  
     const titleWithoutEndDate = title.replace(/\|.*/gi, '').replace('.', '');
 
     const titleWOEDAndSpaces = titleWithoutEndDate
@@ -74,7 +79,7 @@ hidden: true
 
     let permalink = _.snakeCase(filename);
 
-    let localHightlight = new Highlight({
+    let localHighlight = new Highlight({
       filename: filename,
       title: title,
       postUrl: postUrl,
@@ -82,9 +87,12 @@ hidden: true
       permalink: permalink
     });
 
-    highlightArray.push(localHightlight);
+    log.debug(`Found total highlight`, localHighlight);
+
+    highlightArray.push(localHighlight);
   });
 
+  log.info(`Loaded all highlights into the array length[${highlightArray.length}]`);
   //After we get all the nodes for the videos we need to fetch the post page for the video url itself
   _.forEach(highlightArray, function forEachHighlight(highlight) {
     const vidProm = rp({
@@ -107,11 +115,11 @@ hidden: true
     let excerptText = videos[i]('.node .field-type-text-long p').text();
     highlightArray[i].video = videoHtml;
     highlightArray[i].excerpt = excerptText;
+    log.debug(`Looping the videos and setting the video and excerpt [${excerptText}], video [${videoHtml}]`);
   }
 
   const newPosts = await SendNewFilesToGitHubRepo(
     options,
-    context,
     highlightArray
   );
 
