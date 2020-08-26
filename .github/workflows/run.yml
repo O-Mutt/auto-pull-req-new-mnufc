@@ -24,4 +24,5 @@ jobs:
     - run: npm run start
       env:
         CI: true
+        GITHUB_ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }} 
 
