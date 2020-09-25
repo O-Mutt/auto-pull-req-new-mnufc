@@ -29,7 +29,7 @@
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
     "snyk": "^1.385.0",
-    "tslog": "^2.7.1",
+    "tslog": "^2.8.0",
     "typescript": "^4.0.2"
   },
   "devDependencies": {
