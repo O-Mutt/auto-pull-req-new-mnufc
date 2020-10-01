@@ -1,9 +1,8 @@
 import { Highlight } from './highlight';
 import { Octokit } from '@octokit/rest';
-//import { PullsCreateParams, GitGetRefParams } from '@octokit/plugin-rest-endpoint-methods/dist-types/generated/types';
 import _ from 'lodash';
 import { Logger } from "tslog";
-import { ReposGetContentResponseData } from '@octokit/types';
+import { ReposGetContentResponseData, RequestParameters } from '@octokit/types';
 
 const log: Logger = new Logger({ name: "SendFilesToGitHub" });
 
@@ -87,6 +86,7 @@ ${post.video}`;
       repo: options.repo,
       title: post.title || `Default MNUFC Highlight`,
       base: `master`,
+      body: `${post.excerpt}`,
       head: newBranchName
     };
     const result = await octokit.pulls.create(pullParams);
