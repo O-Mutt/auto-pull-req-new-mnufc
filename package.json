@@ -28,7 +28,7 @@
     "lodash": "^4.17.20",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
-    "tslog": "^2.8.0",
+    "tslog": "^2.9.0",
     "snyk": "^1.386.0",
     "typescript": "^4.0.2"
   },
