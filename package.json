@@ -19,18 +19,18 @@
   },
   "homepage": "https://github.com/Mutmatt/auto-pull-req-new-mnufc#readme",
   "dependencies": {
-    "@octokit/rest": "^18.0.4",
+    "@octokit/rest": "^18.0.5",
     "@octokit/types": "^5.5.0",
     "bluebird": "^3.7.2",
     "cheerio": "^1.0.0-rc.3",
     "dotenv": "^8.2.0",
     "github": "^14.0.0",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
-    "tslog": "^2.8.0",
-    "snyk": "^1.386.0",
-    "typescript": "^4.0.2"
+    "tslog": "^2.9.0",
+    "snyk": "^1.425.4",
+    "typescript": "^4.0.3"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.32",
