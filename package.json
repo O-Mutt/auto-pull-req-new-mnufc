@@ -29,8 +29,8 @@
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
     "tslog": "^2.9.0",
-    "snyk": "^1.425.4",
-    "typescript": "^4.2.2"
+    "snyk": "^1.459.0",
+    "typescript": "^4.0.3"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.32",
